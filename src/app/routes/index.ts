@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { blogRouter } from "../modules/blog/blog.route";
 
-const router = Router()
+import authrouter from "../modules/auth/auth.router";
 
-router.use("/blog", blogRouter )
+const router = Router();
 
+// router.use("/blog", blogRouter )
+router.use("/auth", authrouter);
 
-
-export default router
+export default router;
