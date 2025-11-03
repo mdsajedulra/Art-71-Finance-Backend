@@ -55,7 +55,8 @@ const createTransaction = async (payload: ITransaction) => {
 // Get balance summary
 
 const getBalanceSummaryAggregate = async () => {
-  const result = await TransactionModel.aggregate([{$match: {}},
+  const result = await TransactionModel.aggregate([
+    { $match: {} },
     {
       $group: {
         _id: "$paymentMethod",
@@ -97,13 +98,13 @@ const getBalanceSummaryAggregate = async () => {
 
 // get income by source
 
-const getIncomeBySource = async () => {
+const getIncomeBySource = async ({ date }: { date: any }) => {
   const result = await TransactionModel.aggregate([
     {
-      $match: { type: "income" },
+      $match: { type: "income", date },
     },
     {
-      $group: {_id: "$source", totalIncome: { $sum: "$amount" },  },
+      $group: { _id: "$source", totalIncome: { $sum: "$amount" } },
     },
   ]);
 
@@ -112,10 +113,10 @@ const getIncomeBySource = async () => {
 
 // get expense by source
 
-const getExpenseBySource = async () => {
+const getExpenseBySource = async ({ date }: { date: any }) => {
   const result = await TransactionModel.aggregate([
     {
-      $match: { type: "expense" },
+      $match: { type: "expense", date },
     },
     {
       $group: {
@@ -128,12 +129,54 @@ const getExpenseBySource = async () => {
   return result;
 };
 
-// all transaction by source
+// get balance summary aggregate all
 
+const getBalanceSummaryAggregateAll = async () => {
+  const result = await TransactionModel.aggregate([
+    {
+      $group: {
+        _id: "$paymentMethod",
+        totalIncome: {
+          $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] },
+        },
+        totalExpense: {
+          $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] },
+        },
+      },
+    },
+  ]);
 
-const getBalanceSummary = async ({date}:{date: any}) => {
+  // Initialize summary
+  let bankBalance = 0;
+  let cashBalance = 0;
 
-  const result = await TransactionModel.aggregate([{$match: {date}},
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  // Map aggregate result to clean summary
+  result.forEach((r) => {
+    const balance = r.totalIncome - r.totalExpense;
+    if (r._id === "bank") bankBalance = balance;
+    if (r._id === "cash") cashBalance = balance;
+
+    totalIncome += r.totalIncome;
+    totalExpense += r.totalExpense;
+  });
+
+  return {
+    remainingBalance: bankBalance + cashBalance,
+    bankBalance,
+    cashBalance,
+    totalExpense,
+    totalIncome,
+  };
+};
+
+// get balance summary by date range
+
+const getBalanceSummary = async ({ date }: { date: any }) => {
+  const result = await TransactionModel.aggregate([
+    { $match: { date } },
     {
       $group: {
         _id: "$paymentMethod",
@@ -173,7 +216,6 @@ const getBalanceSummary = async ({date}:{date: any}) => {
   };
 };
 
-
 const getAllTransactions = async (query: any) => {
   // console.log(query.range);
   const { start, end } = queryBuilder(
@@ -183,13 +225,37 @@ const getAllTransactions = async (query: any) => {
   );
 
   // console.log(start, end);
-
-  const result = await TransactionModel.find({
+  // all transactions in date range
+  const transactions = await TransactionModel.find({
     $or: [{ date: { $gte: start, $lte: end } }],
   }).sort({ date: -1 });
+  // balance summary in date range
+  const summary = await getBalanceSummary({ date: { $gte: start, $lte: end } });
 
-  const summary = await getBalanceSummary({ date: { $gte: start, $lte: end } })
-  return { summary, result };
+  // income by source in date range
+  const incomeBySource = await getIncomeBySource({
+    date: { $gte: start, $lte: end },
+  });
+
+  // expense by source in date range
+  const expenseBySource = await getExpenseBySource({
+    date: { $gte: start, $lte: end },
+  });
+  // overall balance summary
+  const balanceSummaryAggregateAll = await getBalanceSummaryAggregateAll();
+  return {
+    summary,
+    transactions,
+    incomeBySource,
+    expenseBySource,
+    overAll: {
+      remainingBalance: balanceSummaryAggregateAll.remainingBalance,
+      bankBalance: balanceSummaryAggregateAll.bankBalance,
+      cashBalance: balanceSummaryAggregateAll.cashBalance,
+      totalExpense: balanceSummaryAggregateAll.totalExpense,
+      totalIncome: balanceSummaryAggregateAll.totalIncome,
+    },
+  };
 };
 
 export const transactionService = {

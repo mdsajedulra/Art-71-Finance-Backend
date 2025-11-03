@@ -22,7 +22,7 @@ export type TransactionType = "income" | "expense" | "loan" | "personal";
 
 // Transaction interface
 export interface ITransaction {
-  userId: Types.ObjectId; // Founder/member/user ID
+  userId?: Types.ObjectId; // Founder/member/user ID
   amount: number;
   type: TransactionType; // এখন income | expense | loan | personal
   paymentMethod: "cash" | "bank";

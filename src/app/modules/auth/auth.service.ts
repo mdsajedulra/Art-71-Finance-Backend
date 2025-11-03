@@ -1,9 +1,9 @@
-import { IUser } from '../user/user.interface';
-import User from '../user/user.model';
-import { ILoginUser } from './auth.interface';
-import bcrypt from 'bcrypt';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import config from '../../config';
+import { IUser } from "../user/user.interface";
+import User from "../user/user.model";
+import { ILoginUser } from "./auth.interface";
+import bcrypt from "bcrypt";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import config from "../../config";
 
 const register = (payload: IUser) => {
   const result = User.create(payload);
@@ -11,48 +11,48 @@ const register = (payload: IUser) => {
 };
 
 const login = async (payload: ILoginUser) => {
-  const user = await User.findOne({ email: payload.email }).select('+password');
+  const user = await User.findOne({ email: payload.email }).select("+password");
   if (!user) {
-    throw new Error('User Not Found');
+    throw new Error("User Not Found");
   }
   const userStatus = user?.isBlocked;
   if (userStatus) {
-    throw new Error('User is Blocked');
+    throw new Error("User is Blocked");
   }
   const isPasswordMatch = await bcrypt.compare(
     payload.password,
-    user?.password,
+    user?.password
   );
 
   if (!isPasswordMatch) {
-    throw new Error('Invalid Password');
+    throw new Error("Invalid Password");
   }
-  const token = jwt.sign({ email: user?.email, role: user?.role }, 'secret', {
-    expiresIn: '1d',
+  const token = jwt.sign({ email: user?.email, role: user?.role }, "secret", {
+    expiresIn: "1d",
   });
   const verifiedUser = {
     name: user?.name,
     email: user?.email,
     role: user?.role,
   };
-  return { token, verifiedUser };
+  return { token, email: user?.email, verifiedUser };
 };
 
 //change password
 
 const changePassword = async (
   userData: JwtPayload,
-  payload: { oldPassword: string; newPassword: string },
+  payload: { oldPassword: string; newPassword: string }
 ) => {
   // checking if the user is exist
   // console.log(userData);
 
   const user = await User.findOne({ email: userData.email }).select(
-    '+password',
+    "+password"
   );
 
   if (!user) {
-    throw new Error('This user is not found !');
+    throw new Error("This user is not found !");
   }
 
   // checking if the user is blocked
@@ -61,7 +61,7 @@ const changePassword = async (
   // console.log(userStatus);
 
   if (userStatus === true) {
-    throw new Error('This user is blocked ! !');
+    throw new Error("This user is blocked ! !");
   }
 
   // console.log(user);
@@ -69,16 +69,16 @@ const changePassword = async (
   // checking if the password is correct
   const isPasswordMatch = await bcrypt.compare(
     payload.oldPassword,
-    user?.password,
+    user?.password
   );
 
-  console.log('password match', isPasswordMatch);
-  if (!isPasswordMatch) throw new Error('Password do not matched');
+  console.log("password match", isPasswordMatch);
+  if (!isPasswordMatch) throw new Error("Password do not matched");
 
   //hash new password
   const newHashedPassword = await bcrypt.hash(
     payload.newPassword,
-    Number(config.bcrypt_salt_rounds),
+    Number(config.bcrypt_salt_rounds)
   );
 
   console.log(newHashedPassword);
@@ -90,7 +90,7 @@ const changePassword = async (
     },
     {
       password: newHashedPassword,
-    },
+    }
   );
 
   return updateP;
