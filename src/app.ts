@@ -10,7 +10,7 @@ app.use(express.json());
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://book-shop-client-ashy.vercel.app",
+  "https://art71-finance-font-end.vercel.app",
 ];
 
 app.use(

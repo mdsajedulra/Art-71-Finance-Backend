@@ -31,27 +31,27 @@ const result = await transactionService.getBalanceSummaryAggregate();
 
 // get income by source
 
-const getIncomeBySource = catchAsync(async (req, res) => {
-  const result = await transactionService.getIncomeBySource();
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    data: result,
-    message: "Income by source retrieved successfully",
-    success: true,
-  });
-});
+// const getIncomeBySource = catchAsync(async (req, res) => {
+//   const result = await transactionService.getIncomeBySource();
+//   sendResponse(res, {
+//     statusCode: StatusCodes.OK,
+//     data: result,
+//     message: "Income by source retrieved successfully",
+//     success: true,
+//   });
+// });
 
-// get expense by source 
+// // get expense by source 
 
-const getExpenseBySource = catchAsync(async (req, res) => {
-  const result = await transactionService.getExpenseBySource();
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    data: result,
-    message: "Expense by source retrieved successfully",
-    success: true,
-  });
-});
+// const getExpenseBySource = catchAsync(async (req, res) => {
+//   const result = await transactionService.getExpenseBySource();
+//   sendResponse(res, {
+//     statusCode: StatusCodes.OK,
+//     data: result,
+//     message: "Expense by source retrieved successfully",
+//     success: true,
+//   });
+// });
 // all transaction by source
 
 const allTransactionBySource = catchAsync(async (req, res) => {
@@ -70,7 +70,7 @@ const allTransactionBySource = catchAsync(async (req, res) => {
 export const transactionController = {
   createTransaction,
   getBalanceSummaryAggregate,
-  getIncomeBySource,
-  getExpenseBySource,
+  // getIncomeBySource,
+  // getExpenseBySource,
   allTransactionBySource
 };
